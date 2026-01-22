@@ -103,7 +103,7 @@ static class CodeAnalysisMetricDataExtensions
         static string ToMemberName(CodeAnalysisMetricData member, string className)
         {
             var name = member.Symbol?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)
-                       ?? member.Name
+                       ?? member.Symbol?.Name
                        ?? string.Empty;
         
             var idx = name.IndexOf(className, StringComparison.Ordinal);

@@ -1,3 +1,0 @@
-@echo off
-echo Building and running VBHelloWorld sample...
-dotnet run --project "%~dp0HelloWorld\HelloWorld.csproj"

@@ -1,3 +1,0 @@
-@echo off
-echo Building and running Stocks sample...
-dotnet run --project "%~dp0Stocks.csproj"

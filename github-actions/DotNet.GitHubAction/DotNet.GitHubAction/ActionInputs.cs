@@ -4,6 +4,9 @@ public class ActionInputs
 {
     string _repositoryName = null!;
     string _branchName = null!;
+    string _baseRef =
+        Environment.GetEnvironmentVariable("GITHUB_BASE_REF")
+        ?? "origin/main";
 
     public ActionInputs()
     {
@@ -46,6 +49,21 @@ public class ActionInputs
         Required = true,
         HelpText = "The workspace directory, or repository root directory.")]
     public string WorkspaceDirectory { get; set; } = null!;
+
+    [Option('c', "changed-only",
+        Required = false,
+        Default = false,
+        HelpText = "Only analyze projects that contain files changed between the base ref and HEAD.")]
+    public bool ChangedOnly { get; set; }
+
+    [Option('r', "base",
+        Required = false,
+        HelpText = "Base git ref used when `changed-only` is true. Defaults to `GITHUB_BASE_REF` or `origin/main`.")]
+    public string BaseRef
+    {
+        get => _baseRef;
+        set => _baseRef = string.IsNullOrWhiteSpace(value) ? _baseRef : value;
+    }
 
     static void ParseAndAssign(string? value, Action<string> assign)
     {

@@ -20,6 +20,14 @@ inputs:
     description: 'The workspace directory.'
     required: false
     default: '/github/workspace'
+  changed-only:
+    description: 'Only analyze projects that contain files changed between the base ref and HEAD.'
+    required: false
+    default: 'false'
+  base:
+    description: 'Base git ref to diff against when changed-only is true (e.g., origin/main). Defaults to GITHUB_BASE_REF or origin/main.'
+    required: false
+    default: 'origin/main'
 outputs:
   summary-title:
     description: 'The title of the code metrics action.'
@@ -41,3 +49,7 @@ runs:
   - ${{ inputs.dir }}
   - '-w'
   - ${{ inputs.workspace }}
+  - '-c'
+  - ${{ inputs.changed-only }}
+  - '-r'
+  - ${{ inputs.base }}

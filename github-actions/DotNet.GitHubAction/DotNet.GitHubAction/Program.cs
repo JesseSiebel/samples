@@ -31,12 +31,13 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     var projectAnalyzer = Get<ProjectMetricDataAnalyzer>(host);
 
     Matcher matcher = new();
-
+    var patterns = new List<string>();
     foreach (var target in targetProjects)
     {
-        matcher.AddIncludePatterns($"**/{target}.csproj");
+        patterns.Add($"**/{target}");
     }
-    //matcher.AddIncludePatterns(new[] { "**/*.csproj", "**/*.vbproj" });
+
+    matcher.AddIncludePatterns(patterns.ToArray());
 
     Dictionary<string, CodeAnalysisMetricData> metricData = new(StringComparer.OrdinalIgnoreCase);
     var projects = matcher.GetResultsInFullPath(inputs.Directory);

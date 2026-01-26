@@ -52,12 +52,12 @@ public class ActionInputs
         HelpText = "Comma or newline separated file paths (relative to the workspace) used to filter which projects are analyzed.")]
     public string? ChangedFiles { get; set; }
 
-    internal IReadOnlyList<string> GetChangedFiles() =>
+    internal List<string> GetChangedFiles() =>
         string.IsNullOrWhiteSpace(ChangedFiles)
-            ? Array.Empty<string>()
+            ? List.Empty<string>()
             : ChangedFiles
                 .Split(new[] { '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToArray();
+                .ToList();
 
     static void ParseAndAssign(string? value, Action<string> assign)
     {

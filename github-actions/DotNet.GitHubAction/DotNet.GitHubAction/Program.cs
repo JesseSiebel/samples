@@ -12,7 +12,7 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     using CancellationTokenSource tokenSource = new();
 
     List<string> changedFiles = inputs.GetChangedFiles();
-    List<string> targetProjects = new();    
+    List<string> targetProjects = [];    
 
     foreach (var file in changedFiles)
     {

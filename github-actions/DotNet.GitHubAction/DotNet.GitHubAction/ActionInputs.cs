@@ -54,10 +54,8 @@ public class ActionInputs
 
     internal List<string> GetChangedFiles() =>
         string.IsNullOrWhiteSpace(ChangedFiles)
-            ? List.Empty<string>()
-            : ChangedFiles
-                .Split(new[] { '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .ToList();
+            ? []
+            : [.. ChangedFiles.Split(new[] { '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
 
     static void ParseAndAssign(string? value, Action<string> assign)
     {

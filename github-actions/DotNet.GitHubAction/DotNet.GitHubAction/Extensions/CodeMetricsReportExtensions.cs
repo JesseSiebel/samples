@@ -17,7 +17,8 @@ static class CodeMetricsReportExtensions
         document.AppendParagraph(
             $"This file is dynamically maintained by a bot, *please do not* edit this by hand. It represents various [code metrics](https://aka.ms/dotnet/code-metrics), such as cyclomatic complexity, maintainability index, and so on.");
 
-        List<(string Id, string ClassName, string MermaidCode)> classDiagrams = new();
+        List<(string Id, string ClassName, string MermaidCode)>? classDiagrams =
+            actionInputs.SkipMermaid ? null : new();
         foreach ((string filePath, CodeAnalysisMetricData assemblyMetric)
             in metricData.OrderBy(md => md.Key))
         {
@@ -88,13 +89,13 @@ static class CodeMetricsReportExtensions
 
                     document.AppendTable(tableHeader, rows);
 
-                    if (classSymbolName is not "<Program>$")
+                    if (!actionInputs.SkipMermaid && classSymbolName is not "<Program>$")
                     {
                         var encodedName = HttpUtility.HtmlEncode(classSymbolName);
                         var id = $"{encodedName}-class-diagram";
                         var linkToClassDiagram = $"<a href=\"#{id}\">:link: to `{encodedName}` class diagram</a>";
                         document.AppendParagraph(linkToClassDiagram);
-                        classDiagrams.Add((id, classSymbolName, classMetric.ToMermaidClassDiagram(classSymbolName)));
+                        classDiagrams!.Add((id, classSymbolName, classMetric.ToMermaidClassDiagram(classSymbolName)));
                     }
 
                     document.AppendParagraph(namespaceLink); // Links back to the parent namespace in the MD doc

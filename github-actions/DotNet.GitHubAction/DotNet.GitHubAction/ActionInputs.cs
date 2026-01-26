@@ -52,6 +52,11 @@ public class ActionInputs
         HelpText = "Comma or newline separated file paths (relative to the workspace) used to filter which projects are analyzed.")]
     public string? ChangedFiles { get; set; }
 
+    [Option('m', "skip-mermaid",
+        Required = false,
+        HelpText = "When true, skip generating Mermaid class diagrams in CODE_METRICS.md.")]
+    public bool SkipMermaid { get; set; }
+
     internal List<string> GetChangedFiles() =>
         string.IsNullOrWhiteSpace(ChangedFiles)
             ? new List<string>()

@@ -23,6 +23,10 @@ inputs:
   changed-files:
     description: 'Comma or newline separated file paths (relative to workspace) to limit analysis to projects that contain those files.'
     required: false
+  skip-mermaid:
+    description: 'When true, skip generating Mermaid class diagrams in CODE_METRICS.md.'
+    required: false
+    default: 'false'
 outputs:
   summary-title:
     description: 'The title of the code metrics action.'
@@ -46,3 +50,5 @@ runs:
   - ${{ inputs.workspace }}
   - '-c'
   - ${{ inputs.changed-files }}
+  - '-m'
+  - ${{ inputs.skip-mermaid }}

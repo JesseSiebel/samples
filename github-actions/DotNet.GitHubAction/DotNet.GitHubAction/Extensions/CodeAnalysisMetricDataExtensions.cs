@@ -102,46 +102,30 @@ static class CodeAnalysisMetricDataExtensions
 
         static string ToMemberName(CodeAnalysisMetricData member, string className)
         {
-            var accessModifier = ToAccessModifier(member);
-            if (member.Symbol.Kind is SymbolKind.Method)
+            var name = member.Symbol?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)
+                       ?? member.Symbol?.Name
+                       ?? string.Empty;
+
+            var idx = name.IndexOf(className, StringComparison.Ordinal);
+            if (idx < 0)
             {
-                var method = member.ToDisplayName();
-                var ctorMethod = $"{className}.{className}";
-                if (method.StartsWith(ctorMethod))
-                {
-                    var ctor = method.Substring(ctorMethod.Length);
-                    return $"{accessModifier}.ctor{ctor} {className}";
-                }
-
-                if (member.Symbol is IMethodSymbol methodSymbol)
-                {
-                    var rtrnType = methodSymbol.ReturnType.ToString()!;
-                    if (rtrnType.Contains("."))
-                    {
-                        goto regex;
-                    }
-
-                    var classNameOffset = className.Contains(".")
-                        ? className.Substring(className.IndexOf(".")).Length - 1
-                        : className.Length;
-
-                    var index = rtrnType.Length + 2 + classNameOffset;
-                    var methodSignature = method.Substring(index);
-                    return $"{accessModifier}{methodSignature}{ToClassifier(member)} {rtrnType}";
-                }
-
-            regex:
-                Regex returnType = new(@"^(?<returnType>[\S]+)");
-                if (returnType.Match(method) is { Success: true } match)
-                {
-                    // 2 is hardcoded for the space and "." characters
-                    var index = method.IndexOf(" ") + 2 + className.Length;
-                    var methodSignature = method.Substring(index);
-                    return $"{accessModifier}{methodSignature}{ToClassifier(member)} {match.Groups["returnType"]}";
-                }
+                return name;
             }
 
-            return $"{accessModifier}{member.ToDisplayName().Replace($"{className}.", "")}";
+            var start = idx + className.Length;
+            if (start >= name.Length)
+            {
+                return name;
+            }
+
+            var sep = name.IndexOf("::", start, StringComparison.Ordinal);
+            if (sep < 0 || sep + 2 > name.Length)
+            {
+                return name.Substring(start).TrimStart('.');
+            }
+
+            var tail = sep + 2;
+            return tail >= name.Length ? name : name.Substring(tail);
         }
 
         foreach (var member

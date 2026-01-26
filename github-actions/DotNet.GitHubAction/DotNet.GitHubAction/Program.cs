@@ -25,14 +25,18 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
 
     Dictionary<string, CodeAnalysisMetricData> metricData = new(StringComparer.OrdinalIgnoreCase);
 
-    var allProjects = matcher.GetResultsInFullPath(inputs.Directory).ToArray();
+    var rootDir = Path.GetFullPath(inputs.Directory);
+    var allProjects = matcher.GetResultsInFullPath(rootDir).ToArray();
     var projects = allProjects;
 
     var changedFiles = inputs.GetChangedFiles();
     if (changedFiles.Count > 0)
     {
         var changedFullPaths = changedFiles
-            .Select(f => Path.GetFullPath(Path.Combine(inputs.WorkspaceDirectory, f)))
+            .Select(f =>
+                Path.IsPathRooted(f)
+                    ? Path.GetFullPath(f)
+                    : Path.GetFullPath(Path.Combine(inputs.WorkspaceDirectory, f)))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
@@ -60,6 +64,12 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
             logger.LogInformation("No projects matched the changed files filter; skipping analysis.");
             return;
         }
+    }
+
+    if (projects.Length == 0)
+    {
+        logger.LogInformation("No projects were found to analyze; skipping analysis.");
+        return;
     }
 
     foreach (var project in projects)

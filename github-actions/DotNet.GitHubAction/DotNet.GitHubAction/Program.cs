@@ -34,7 +34,7 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     var patterns = new List<string>();
     foreach (var target in targetProjects)
     {
-        patterns.Add($"**/{target}");
+        patterns.Add($"**/{target}.csproj");
     }
 
     matcher.AddIncludePatterns(patterns.ToArray());

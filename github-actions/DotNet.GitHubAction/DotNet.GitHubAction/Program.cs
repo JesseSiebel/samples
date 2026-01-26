@@ -11,6 +11,18 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     using ProjectWorkspace workspace = Get<ProjectWorkspace>(host);
     using CancellationTokenSource tokenSource = new();
 
+    List<string> changedFiles = inputs.GetChangedFiles();
+    List<string> targetProjects = new();    
+
+    foreach (var file in changedFiles)
+    {
+        int indexOfFirstSlash = file.IndexOf('/');
+        if (indexOfFirstSlash >= 0)
+        {
+            targetProjects.Add(file[(indexOfFirstSlash + 1)..]);
+        }
+    }
+
     Console.CancelKeyPress += delegate
     {
         tokenSource.Cancel();
@@ -19,58 +31,15 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     var projectAnalyzer = Get<ProjectMetricDataAnalyzer>(host);
 
     Matcher matcher = new();
-    matcher.AddIncludePatterns(new[] { "**/*.csproj", "**/*.vbproj" });
 
-    var logger = Get<ILoggerFactory>(host).CreateLogger(nameof(StartAnalysisAsync));
+    foreach (var target in targetProjects)
+    {
+        matcher.AddIncludePatterns($"**/{target}.csproj");
+    }
+    //matcher.AddIncludePatterns(new[] { "**/*.csproj", "**/*.vbproj" });
 
     Dictionary<string, CodeAnalysisMetricData> metricData = new(StringComparer.OrdinalIgnoreCase);
-
-    var rootDir = Path.GetFullPath(inputs.Directory);
-    var allProjects = matcher.GetResultsInFullPath(rootDir).ToArray();
-    var projects = allProjects;
-
-    var changedFiles = inputs.GetChangedFiles();
-    if (changedFiles.Count > 0)
-    {
-        var changedFullPaths = changedFiles
-            .Select(f =>
-                Path.IsPathRooted(f)
-                    ? Path.GetFullPath(f)
-                    : Path.GetFullPath(Path.Combine(inputs.WorkspaceDirectory, f)))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        projects = allProjects
-            .Where(p =>
-            {
-                var projectDir = Path.GetFullPath(Path.GetDirectoryName(p)!);
-                projectDir = Path.TrimEndingDirectorySeparator(projectDir);
-                var projectDirWithSep = projectDir + Path.DirectorySeparatorChar;
-
-                return changedFullPaths.Any(f =>
-                {
-                    var filePath = Path.GetFullPath(f);
-                    return filePath.StartsWith(projectDirWithSep, StringComparison.OrdinalIgnoreCase)
-                           || string.Equals(filePath, projectDir, StringComparison.OrdinalIgnoreCase);
-                });
-            })
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        logger.LogInformation("Filtering by changed files: {ProjectCount} project(s) selected.", projects.Length);
-
-        if (projects.Length == 0)
-        {
-            logger.LogInformation("No projects matched the changed files filter; skipping analysis.");
-            return;
-        }
-    }
-
-    if (projects.Length == 0)
-    {
-        logger.LogInformation("No projects were found to analyze; skipping analysis.");
-        return;
-    }
+    var projects = matcher.GetResultsInFullPath(inputs.Directory);
 
     foreach (var project in projects)
     {
@@ -91,6 +60,7 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     {
         var fileName = "CODE_METRICS.md";
         var fullPath = Path.Combine(inputs.Directory, fileName);
+        var logger = Get<ILoggerFactory>(host).CreateLogger(nameof(StartAnalysisAsync));
         var fileExists = File.Exists(fullPath);
 
         logger.LogInformation(

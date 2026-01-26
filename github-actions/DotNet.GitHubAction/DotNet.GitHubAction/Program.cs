@@ -12,14 +12,14 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     using CancellationTokenSource tokenSource = new();
 
     List<string> changedFiles = inputs.GetChangedFiles();
-    List<string> targetProjects = [];    
+    List<string> targetProjects = new();    
 
     foreach (var file in changedFiles)
     {
         int indexOfFirstSlash = file.IndexOf('/');
         if (indexOfFirstSlash >= 0)
         {
-            targetProjects.Add(file[(indexOfFirstSlash + 1)..]);
+            targetProjects.Add(file.Substring(0, indexOfFirstSlash + 1));
         }
     }
 

@@ -24,31 +24,42 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     var logger = Get<ILoggerFactory>(host).CreateLogger(nameof(StartAnalysisAsync));
 
     Dictionary<string, CodeAnalysisMetricData> metricData = new(StringComparer.OrdinalIgnoreCase);
-    var projects = matcher.GetResultsInFullPath(inputs.Directory).ToArray();
+
+    var allProjects = matcher.GetResultsInFullPath(inputs.Directory).ToArray();
+    var projects = allProjects;
 
     var changedFiles = inputs.GetChangedFiles();
     if (changedFiles.Count > 0)
     {
         var changedFullPaths = changedFiles
             .Select(f => Path.GetFullPath(Path.Combine(inputs.WorkspaceDirectory, f)))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        projects = projects
+        projects = allProjects
             .Where(p =>
             {
-                var projectDir = Path.GetDirectoryName(p)!;
+                var projectDir = Path.GetFullPath(Path.GetDirectoryName(p)!);
+                projectDir = Path.TrimEndingDirectorySeparator(projectDir);
+                var projectDirWithSep = projectDir + Path.DirectorySeparatorChar;
+
                 return changedFullPaths.Any(f =>
-                    f.StartsWith(projectDir, StringComparison.OrdinalIgnoreCase));
+                {
+                    var filePath = Path.GetFullPath(f);
+                    return filePath.StartsWith(projectDirWithSep, StringComparison.OrdinalIgnoreCase)
+                           || string.Equals(filePath, projectDir, StringComparison.OrdinalIgnoreCase);
+                });
             })
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
         logger.LogInformation("Filtering by changed files: {ProjectCount} project(s) selected.", projects.Length);
-    }
 
-    if (projects.Length == 0)
-    {
-        logger.LogInformation("No projects matched the changed files filter; skipping analysis.");
+        if (projects.Length == 0)
+        {
+            logger.LogInformation("No projects matched the changed files filter; skipping analysis.");
+            return;
+        }
     }
 
     foreach (var project in projects)

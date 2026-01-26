@@ -110,7 +110,11 @@ static class CodeMetricsReportExtensions
         }
 
         AppendMetricDefinitions(document);
-        AppendMermaidClassDiagrams(document, classDiagrams);
+
+        if (!actionInputs.SkipMermaid && classDiagrams is { Count: > 0 })
+        {
+            AppendMermaidClassDiagrams(document, classDiagrams);
+        }
         AppendMaintainedByBotMessage(document);
         RestoreMarkdownLinter(document);
 

@@ -47,6 +47,18 @@ public class ActionInputs
         HelpText = "The workspace directory, or repository root directory.")]
     public string WorkspaceDirectory { get; set; } = null!;
 
+    [Option('c', "changed-files",
+        Required = false,
+        HelpText = "Comma or newline separated file paths (relative to the workspace) used to filter which projects are analyzed.")]
+    public string? ChangedFiles { get; set; }
+
+    internal IReadOnlyList<string> GetChangedFiles() =>
+        string.IsNullOrWhiteSpace(ChangedFiles)
+            ? Array.Empty<string>()
+            : ChangedFiles
+                .Split(new[] { '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToArray();
+
     static void ParseAndAssign(string? value, Action<string> assign)
     {
         if (value is { Length: > 0 } && assign is not null)

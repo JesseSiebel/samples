@@ -21,8 +21,35 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     Matcher matcher = new();
     matcher.AddIncludePatterns(new[] { "**/*.csproj", "**/*.vbproj" });
 
+    var logger = Get<ILoggerFactory>(host).CreateLogger(nameof(StartAnalysisAsync));
+
     Dictionary<string, CodeAnalysisMetricData> metricData = new(StringComparer.OrdinalIgnoreCase);
-    var projects = matcher.GetResultsInFullPath(inputs.Directory);
+    var projects = matcher.GetResultsInFullPath(inputs.Directory).ToArray();
+
+    var changedFiles = inputs.GetChangedFiles();
+    if (changedFiles.Count > 0)
+    {
+        var changedFullPaths = changedFiles
+            .Select(f => Path.GetFullPath(Path.Combine(inputs.WorkspaceDirectory, f)))
+            .ToArray();
+
+        projects = projects
+            .Where(p =>
+            {
+                var projectDir = Path.GetDirectoryName(p)!;
+                return changedFullPaths.Any(f =>
+                    f.StartsWith(projectDir, StringComparison.OrdinalIgnoreCase));
+            })
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        logger.LogInformation("Filtering by changed files: {ProjectCount} project(s) selected.", projects.Length);
+    }
+
+    if (projects.Length == 0)
+    {
+        logger.LogInformation("No projects matched the changed files filter; skipping analysis.");
+    }
 
     foreach (var project in projects)
     {
@@ -43,7 +70,6 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
     {
         var fileName = "CODE_METRICS.md";
         var fullPath = Path.Combine(inputs.Directory, fileName);
-        var logger = Get<ILoggerFactory>(host).CreateLogger(nameof(StartAnalysisAsync));
         var fileExists = File.Exists(fullPath);
 
         logger.LogInformation(

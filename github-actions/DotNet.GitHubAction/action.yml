@@ -20,6 +20,9 @@ inputs:
     description: 'The workspace directory.'
     required: false
     default: '/github/workspace'
+  changed-files:
+    description: 'Comma or newline separated file paths (relative to workspace) to limit analysis to projects that contain those files.'
+    required: false
 outputs:
   summary-title:
     description: 'The title of the code metrics action.'
@@ -41,3 +44,5 @@ runs:
   - ${{ inputs.dir }}
   - '-w'
   - ${{ inputs.workspace }}
+  - '-c'
+  - ${{ inputs.changed-files }}

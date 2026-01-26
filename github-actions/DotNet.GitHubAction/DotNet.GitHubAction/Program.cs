@@ -37,6 +37,11 @@ static async Task StartAnalysisAsync(ActionInputs inputs, IHost host)
         patterns.Add($"**/{target}.csproj");
     }
 
+    foreach(var pattern in patterns)
+    {
+        Console.WriteLine($"Including pattern: {pattern}");
+    }
+
     matcher.AddIncludePatterns(patterns.ToArray());
 
     Dictionary<string, CodeAnalysisMetricData> metricData = new(StringComparer.OrdinalIgnoreCase);
